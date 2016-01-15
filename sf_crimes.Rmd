@@ -165,14 +165,14 @@ p1
 * EXTORTION
 
 ```{r, echo=FALSE}
-tourists_crimes <-  crimes[crimes$Category %in% c("LARCENY/THEFT","VEHICLE THEFT", "STOLEN PROPERTY" ,"ROBBERY", "ASSAULT", "EXTORTION"), ]
+potential_threat <-  crimes[crimes$Category %in% c("LARCENY/THEFT","VEHICLE THEFT", "STOLEN PROPERTY" ,"ROBBERY", "ASSAULT", "EXTORTION"), ]
 
 ```
 
 ## Crimes structure for districts:
 ```{r, echo=FALSE}
 
-cat_district <- tourists_crimes %>% 
+cat_district <- potential_threat %>% 
   group_by(Category, PdDistrict) %>%
   summarise(count_s=n()) %>%
   ungroup()
@@ -189,8 +189,8 @@ p
 ```{r, echo=FALSE, warning=FALSE}
 
 p <- ggmap(map) +
-  geom_point(data=tourists_crimes, aes(x=X, y=Y), alpha=0.01, color='blue') +
-  stat_density2d(data=tourists_crimes, aes(x=X, y=Y), size=0.8, color='red', geom = 'polygon') +
+  geom_point(data=potential_threat, aes(x=X, y=Y), alpha=0.01, color='blue') +
+  stat_density2d(data=potential_threat, aes(x=X, y=Y), size=0.8, color='red', geom = 'polygon') +
   ggtitle("Potential crimes in San Francisco") + 
   facet_grid(.~ Category)
 p
@@ -199,7 +199,7 @@ p
 
 ## Find most dangerous locations
 ```{r, echo=FALSE, warning=FALSE}
-dangerous_coord <- tourists_crimes %>%
+dangerous_coord <- potential_threat %>%
   group_by(PdDistrict, Address, X, Y) %>%
   summarise(count_s=n()) %>%
   filter(count_s >= 100) %>%
@@ -232,15 +232,15 @@ p
 
 ```{r, echo=FALSE}
 
-crimes$tourusits_threat <- "no"
-crimes$tourusits_threat[crimes$Category %in% c("LARCENY/THEFT","VEHICLE THEFT", "STOLEN PROPERTY" ,"ROBBERY", "ASSAULT", "EXTORTION" )] <- "yes"
+crimes$potential_threat <- "no"
+crimes$potential_threat[crimes$Category %in% c("LARCENY/THEFT","VEHICLE THEFT", "STOLEN PROPERTY" ,"ROBBERY", "ASSAULT", "EXTORTION" )] <- "yes"
 
 train_size <- nrow(crimes)*0.8
 train_ind <- sample(nrow(crimes), train_size)
 
 train <- crimes[train_ind, ]
 test  <- crimes[-train_ind, ]
-train$tourusits_threat <- as.factor(train$tourusits_threat)
+train$potential_threat <- as.factor(train$potential_threat)
 
 ```
 
@@ -252,7 +252,7 @@ train$tourusits_threat <- as.factor(train$tourusits_threat)
 
 ## Classification
 ```{r}
-m1 <- naiveBayes(as.factor(tourusits_threat) ~ PdDistrict + DayOfWeek + hour, data = train, laplace = 1)
+m1 <- naiveBayes(as.factor(potential_threat) ~ PdDistrict + DayOfWeek + hour, data = train, laplace = 1)
 m1
 
 ```
@@ -263,14 +263,14 @@ Apply our trained model for the test data
 
 ```{r, echo=FALSE, warning=FALSE}
 pred_nb <- predict(m1, test)
-table(pred_nb, test$tourusits_threat)
+table(pred_nb, test$potential_threat)
 
 ```
 
 ## Validation
 
 ```{r}
-table(pred_nb, test$tourusits_threat)
+table(pred_nb, test$potential_threat)
 ```
 
 ![Image](http://effectsizefaq.files.wordpress.com/2010/05/type-i-and-type-ii-errors.jpg)
